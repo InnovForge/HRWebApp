@@ -45,4 +45,5 @@ msbuild.wrn
 
 # NuGet Packages
 packages/
-Web.config
+
+HRWebApp/Web.config
