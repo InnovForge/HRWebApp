@@ -19,6 +19,7 @@ namespace HRWebApp.Controllers
     public class PersonalsController : Controller
     {
         private HRDB db = new HRDB();
+        KafkaProducerService kafkaProducerService = new KafkaProducerService();
 
         // GET: Personals
         public ActionResult Index()
@@ -62,9 +63,9 @@ namespace HRWebApp.Controllers
             {
                 db.Personals.Add(personal);
                 db.SaveChanges();
-                KafkaProducerService kafkaProducerService = new KafkaProducerService();
+              
                 // Send the data to Kafka
-                kafkaProducerService.SendMessageAsync("hr-updated", JsonConvert.SerializeObject(personal));
+                kafkaProducerService.SendMessageAsync("hr-created", JsonConvert.SerializeObject(personal));
                 //_ = Task.Run(async () =>
                 //{
                 //    try
@@ -134,11 +135,13 @@ namespace HRWebApp.Controllers
             {
                 db.Entry(personal).State = EntityState.Modified;
                 db.SaveChanges();
+                kafkaProducerService.SendMessageAsync("hr-updated", JsonConvert.SerializeObject(personal));
                 return RedirectToAction("Index");
             }
             ViewBag.Benefit_Plans = new SelectList(db.Benefit_Plans, "Benefit_Plan_ID", "Plan_Name", personal.Benefit_Plans);
             ViewBag.Employee_ID = new SelectList(db.Emergency_Contacts, "Employee_ID", "Emergency_Contact_Name", personal.Employee_ID);
             ViewBag.Employee_ID = new SelectList(db.Employments, "Employee_ID", "Employment_Status", personal.Employee_ID);
+           
             return View(personal);
         }
 
@@ -165,6 +168,7 @@ namespace HRWebApp.Controllers
             Personal personal = db.Personals.Find(id);
             db.Personals.Remove(personal);
             db.SaveChanges();
+            kafkaProducerService.SendMessageAsync("hr-deleted", JsonConvert.SerializeObject(personal));
             return RedirectToAction("Index");
         }
 
