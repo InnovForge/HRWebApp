@@ -10,7 +10,10 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using HRWebApp.Models;
+using KafkaNet.Model;
+using KafkaNet;
 using Newtonsoft.Json;
+using KafkaNet.Protocol;
 namespace HRWebApp.Controllers
 {
     public class PersonalsController : Controller
@@ -59,37 +62,39 @@ namespace HRWebApp.Controllers
             {
                 db.Personals.Add(personal);
                 db.SaveChanges();
+                KafkaProducerService kafkaProducerService = new KafkaProducerService();
+                // Send the data to Kafka
+                kafkaProducerService.SendMessageAsync("hr-updated", JsonConvert.SerializeObject(personal));
+                //_ = Task.Run(async () =>
+                //{
+                //    try
+                //    {
+                //        // Create the HttpClient to send the data
+                //        using (var client = new HttpClient())
+                //        {
+                //            var json = JsonConvert.SerializeObject(personal);
+                //            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        // Create the HttpClient to send the data
-                        using (var client = new HttpClient())
-                        {
-                            var json = JsonConvert.SerializeObject(personal);
-                            var content = new StringContent(json, Encoding.UTF8, "application/json");
+                //            // Send the POST request to the Node.js API
+                //            var response = await client.PostAsync("http://localhost:8090/api/v1/partner/personal", content);
 
-                            // Send the POST request to the Node.js API
-                            var response = await client.PostAsync("http://localhost:8090/api/v1/partner/personal", content);
-
-                            if (response.IsSuccessStatusCode)
-                            {
-                                var apiResponse = await response.Content.ReadAsStringAsync();
-                                Console.WriteLine(apiResponse); // Log the successful API response
-                            }
-                            else
-                            {
-                                Console.WriteLine("Error calling API: " + response.StatusCode); // Log the error if it fails
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log any errors during the API call
-                        Console.WriteLine("Error calling API: " + ex.Message);
-                    }
-                });
+                //            if (response.IsSuccessStatusCode)
+                //            {
+                //                var apiResponse = await response.Content.ReadAsStringAsync();
+                //                Console.WriteLine(apiResponse); // Log the successful API response
+                //            }
+                //            else
+                //            {
+                //                Console.WriteLine("Error calling API: " + response.StatusCode); // Log the error if it fails
+                //            }
+                //        }
+                //    }
+                //    catch (Exception ex)
+                //    {
+                //        // Log any errors during the API call
+                //        Console.WriteLine("Error calling API: " + ex.Message);
+                //    }
+                //});
 
                 // Redirect to Index page after saving
                 return RedirectToAction("Index");
